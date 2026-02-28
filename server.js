@@ -13,15 +13,27 @@ app.post("/render", async (req, res) => {
     }
 
     const browser = await puppeteer.launch({
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      headless: "new",
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--no-zygote",
+        "--single-process"
+      ]
     });
 
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
+
+    await page.setContent(html, {
+      waitUntil: "networkidle0",
+      timeout: 30000
+    });
 
     const pdf = await page.pdf({
       format: "A4",
-      printBackground: true,
+      printBackground: true
     });
 
     await browser.close();
@@ -29,7 +41,7 @@ app.post("/render", async (req, res) => {
     res.setHeader("Content-Type", "application/pdf");
     res.send(pdf);
   } catch (err) {
-    console.error(err);
+    console.error("PDF ERROR:", err);
     res.status(500).json({ error: "PDF generation failed" });
   }
 });
