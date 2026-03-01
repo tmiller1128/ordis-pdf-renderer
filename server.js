@@ -2,37 +2,33 @@ const express = require("express");
 const puppeteer = require("puppeteer");
 
 const app = express();
+
 app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
 
 app.post("/render", async (req, res) => {
   try {
-    const { html } = req.body;
+    console.log("Incoming body:", req.body);
+
+    const html = req.body?.html;
 
     if (!html) {
-      return res.status(400).json({ error: "Missing HTML" });
+      return res.status(400).json({
+        error: "Missing HTML",
+        received: req.body
+      });
     }
 
     const browser = await puppeteer.launch({
-      headless: "new",
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-        "--no-zygote"
-      ]
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
 
     const page = await browser.newPage();
-
-    await page.setContent(html, {
-      waitUntil: "domcontentloaded",
-      timeout: 30000
-    });
+    await page.setContent(html, { waitUntil: "domcontentloaded" });
 
     const pdf = await page.pdf({
       format: "A4",
-      printBackground: true
+      printBackground: true,
     });
 
     await browser.close();
@@ -43,9 +39,13 @@ app.post("/render", async (req, res) => {
     console.error("PDF ERROR:", err);
     res.status(500).json({
       error: "PDF generation failed",
-      message: err.message || String(err)
+      message: err.message,
     });
   }
+});
+
+app.get("/", (req, res) => {
+  res.send("PDF renderer running");
 });
 
 const PORT = process.env.PORT || 3000;
