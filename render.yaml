@@ -1,0 +1,6 @@
+services:
+  - type: web
+    runtime: node
+    name: ordis-pdf-renderer
+    buildCommand: npm install && npx puppeteer browsers install chrome
+    startCommand: npm start

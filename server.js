@@ -19,15 +19,14 @@ app.post("/render", async (req, res) => {
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--disable-gpu",
-        "--no-zygote",
-        "--single-process"
+        "--no-zygote"
       ]
     });
 
     const page = await browser.newPage();
 
     await page.setContent(html, {
-      waitUntil: "networkidle0",
+      waitUntil: "domcontentloaded",
       timeout: 30000
     });
 
@@ -42,7 +41,10 @@ app.post("/render", async (req, res) => {
     res.send(pdf);
   } catch (err) {
     console.error("PDF ERROR:", err);
-    res.status(500).json({ error: "PDF generation failed" });
+    res.status(500).json({
+      error: "PDF generation failed",
+      message: err.message || String(err)
+    });
   }
 });
 
